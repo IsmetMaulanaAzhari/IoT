@@ -9,8 +9,8 @@
 // ===========================
 // Enter your WiFi credentials
 // ===========================
-const char *ssid = "TP-Link_AP_4E72";
-const char *password = "98717286";
+const char *ssid = "UNTIRTA";
+const char *password = "untirtajawara";
 
 void startCameraServer();
 void setupLedFlash();

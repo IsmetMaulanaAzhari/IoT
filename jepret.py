@@ -4,7 +4,7 @@ import time
 
 # === UBAH BAGIAN INI ===
 # Masukkan IP Address ESP32-CAM Anda
-ip_address = "172.20.100.4" 
+ip_address = "10.17.157.228/"
 url = f"http://{ip_address}/capture"
 # =======================
 

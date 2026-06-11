@@ -8,7 +8,7 @@ print("Memuat otak YOLO...")
 model = YOLO('yolov8n.pt') 
 
 # === UBAH IP ADDRESS JIKA BERUBAH ===
-url = 'http://172.20.100.4/capture'
+url = 'http://10.17.157.228/capture'
 # ====================================
 
 print("Memulai aliran kamera... (Tekan 'q' pada keyboard untuk berhenti)")
