@@ -3,10 +3,11 @@ import urllib.request
 import numpy as np
 import face_recognition
 import os
+import time
 
 # === KONFIGURASI ===
 # URL ESP32-CAM (Sama seperti YOLO)
-URL_KAMERA = 'http://10.17.157.228/capture'
+URL_KAMERA = 'http://10.17.148.118/capture'
 FOLDER_DATASET = 'dataset'
 
 def muat_wajah_dikenal(folder_dataset):
@@ -14,21 +15,16 @@ def muat_wajah_dikenal(folder_dataset):
     wajah_dikenal_encodings = []
     wajah_dikenal_names = []
 
-    # Mengecek semua folder di dalam dataset (contoh: 'hapis', 'ismet')
     for nama_orang in os.listdir(folder_dataset):
         path_folder_orang = os.path.join(folder_dataset, nama_orang)
         
-        # Pastikan itu adalah folder, bukan file
         if os.path.isdir(path_folder_orang):
             print(f"Memproses wajah untuk: {nama_orang}...")
-            # Mengecek setiap file foto di dalam folder orang tersebut
             for nama_file in os.listdir(path_folder_orang):
                 path_file = os.path.join(path_folder_orang, nama_file)
                 
-                # Baca gambar
                 try:
                     gambar = face_recognition.load_image_file(path_file)
-                    # Ambil encoding (wajah pertama yang ditemukan di foto tersebut)
                     encodings = face_recognition.face_encodings(gambar)
                     
                     if len(encodings) > 0:
@@ -40,13 +36,19 @@ def muat_wajah_dikenal(folder_dataset):
     print("Selesai memuat dataset!")
     return wajah_dikenal_encodings, wajah_dikenal_names
 
-# 1. Muat data wajah sebelum menyalakan kamera
 wajah_dikenal_encodings, wajah_dikenal_names = muat_wajah_dikenal(FOLDER_DATASET)
 
 print("\nMemulai kamera ESP32-CAM...")
 print("Tekan 'q' pada keyboard untuk berhenti.")
 
-# Variabel untuk menghemat performa
+# Menggunakan fitur Stream (Video) dari ESP32-CAM agar jauh lebih cepat
+# Port 81 adalah port khusus video stream bawaan dari ESP32-CAM
+URL_STREAM = URL_KAMERA.replace("/capture", ":81/stream")
+cap = cv2.VideoCapture(URL_STREAM)
+
+# Atur buffer size sekecil mungkin agar tidak ada delay/gambar usang yang menumpuk
+cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
 proses_frame_ini = True
 lokasi_wajah = []
 nama_wajah_terdeteksi = []
@@ -54,10 +56,11 @@ nama_wajah_terdeteksi = []
 # 2. Looping kamera ESP32-CAM
 while True:
     try:
-        # Ambil gambar dari ESP32-CAM
-        img_resp = urllib.request.urlopen(URL_KAMERA, timeout=5)
-        imgnp = np.array(bytearray(img_resp.read()), dtype=np.uint8)
-        frame = cv2.imdecode(imgnp, -1)
+        # Ambil frame dari Stream Video secara otomatis tanpa request HTTP berulang
+        ret, frame = cap.read()
+        if not ret:
+            print("Video stream terputus!")
+            break
         
         # Resize frame menjadi 1/4 ukuran agar proses lebih cepat (opsional, tapi sangat disarankan)
         frame_kecil = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
